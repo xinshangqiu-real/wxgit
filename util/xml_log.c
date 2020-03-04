@@ -2,6 +2,8 @@
 #include <sys/time.h>
 #include <time.h>
 
+#include "xml_define.h"
+
 
 xss_result_t xss_log(const char *func, int32_t func_line, int32_t module, const char *fmt, ...)
 {
@@ -17,8 +19,8 @@ xss_result_t xss_log(const char *func, int32_t func_line, int32_t module, const 
     vsnprintf(in_buffer, sizeof(in_buffer) - 1, fmt, args);
     va_end(args);
 
-    printf("%4d/%02d/%02d %02d:%02d:%02d.%03d [%32s:%4d] M%02x %s", 
-            tm->tm_year+1900, tm->tm_mon+1, tm->tm_mday, 
+    printf("%4d/%02d/%02d %02d:%02d:%02d.%03d [%20s:%4d] X%02x%s",
+            tm->tm_year+1900, tm->tm_mon+1, tm->tm_mday,
             tm->tm_hour, tm->tm_min, tm->tm_sec,(int)(tv.tv_usec/1000),
             func, func_line, module, in_buffer);
 

@@ -6,8 +6,8 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>
-
-
+#include <errno.h>
+#include <unistd.h>
 /*
  * return value
  * */
@@ -34,5 +34,13 @@ typedef int32_t xss_result_t;
 #define LEN_32                          32
 #define LEN_16                          16
 
+/*
+ * xml module list
+ * */
+#define XSS_MODULE_HAL                  0x11
+#define XSS_MODULE_CAM                  0x12        /* camera hal module */
+#define XSS_MODULE_US                   0x13        /* up stream module*/
+#define XSS_MODULE_DS                   0x14        /* down stream module */
+#define XSS_MODULE_UNKNOW               0xFF        /* unknow module */
 
 #endif
