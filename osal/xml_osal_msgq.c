@@ -12,7 +12,7 @@
 #include "xml_osal.h"
 #include "xml_define.h"
 
-typedef struct xss_msgq_priv {
+typedef struct xss_osal_msgq_priv {
     pthread_mutex_t r_mutex;
     pthread_mutex_t s_mutex;
     pthread_cond_t r_cond;
@@ -21,33 +21,33 @@ typedef struct xss_msgq_priv {
     uint32_t head;
     uint32_t tail;
     uint8_t  *buf;
-} xss_msgq_priv_t;
+} xss_osal_msgq_priv_t;
 
 #define DATA_SIZE(x)    ((x->head >= x->tail) ? (x->head - x->tail) : (x->size + x->head - x->tail))
 #define FREE_SIZE(x)    (x->size - DATA_SIZE(x) - 1)
 
 
-xss_result_t xss_msgq_create(xss_msgq_t **msgq, xss_msgq_attr_t *attr)
+xss_result_t xss_osal_msgq_create(xss_osal_msgq_t **msgq, xss_osal_msgq_attr_t *attr)
 {
-    xss_msgq_t *xmsgq = NULL;
-    xss_msgq_priv_t *priv = NULL;
+    xss_osal_msgq_t *xmsgq = NULL;
+    xss_osal_msgq_priv_t *priv = NULL;
     void *mem_base = NULL;
 
     if (msgq == NULL || attr == NULL) {
         return ERR_FAULT;
     }
 
-    mem_base = calloc(sizeof(xss_msgq_t) + sizeof(xss_msgq_priv_t) + attr->size, 1);
+    mem_base = calloc(sizeof(xss_osal_msgq_t) + sizeof(xss_osal_msgq_priv_t) + attr->size, 1);
     if (mem_base == NULL) {
         return ERR_NOMEM;
     }
 
-    xmsgq = (xss_msgq_t *)mem_base;
-    xmsgq->priv = mem_base + sizeof(xss_msgq_t);
-    memcpy(&xmsgq->attr, attr, sizeof(xss_msgq_attr_t));
+    xmsgq = (xss_osal_msgq_t *)mem_base;
+    xmsgq->priv = mem_base + sizeof(xss_osal_msgq_t);
+    memcpy(&xmsgq->attr, attr, sizeof(xss_osal_msgq_attr_t));
 
-    priv = (xss_msgq_priv_t *)xmsgq->priv;
-    priv->buf = (uint8_t *)(mem_base + sizeof(xss_msgq_t) + sizeof(xss_msgq_priv_t));
+    priv = (xss_osal_msgq_priv_t *)xmsgq->priv;
+    priv->buf = (uint8_t *)(mem_base + sizeof(xss_osal_msgq_t) + sizeof(xss_osal_msgq_priv_t));
     priv->size = attr->size;
     priv->head = 240;
     priv->tail = 240;
@@ -62,14 +62,14 @@ xss_result_t xss_msgq_create(xss_msgq_t **msgq, xss_msgq_attr_t *attr)
     return SUCCESS;
 }
 
-xss_result_t xss_msgq_destroy(xss_msgq_t *msgq)
+xss_result_t xss_osal_msgq_destroy(xss_osal_msgq_t *msgq)
 {
-    xss_msgq_priv_t *priv = NULL;
+    xss_osal_msgq_priv_t *priv = NULL;
 
     if (msgq == NULL || msgq->priv == NULL) {
         return ERR_FAULT;
     }
-    priv = (xss_msgq_priv_t *)msgq->priv;
+    priv = (xss_osal_msgq_priv_t *)msgq->priv;
 
     if (pthread_mutex_destroy(&priv->r_mutex) != 0) {
         return ERR_INVAL;
@@ -87,18 +87,26 @@ xss_result_t xss_msgq_destroy(xss_msgq_t *msgq)
     return SUCCESS;
 }
 
-xss_result_t xss_msgq_recv(xss_msgq_t *msgq, void *buf, uint32_t *nbytes, uint32_t timeout_us)
+xss_result_t xss_osal_msgq_recv(xss_osal_msgq_t *msgq, void *buf, uint32_t *nbytes, uint32_t timeout_us)
 {
     struct timespec ts;
     xss_result_t ret = SUCCESS;
-    xss_msgq_priv_t *priv = NULL;
+    xss_osal_msgq_priv_t *priv = NULL;
     uint32_t recv_len = 0;
 
     if (msgq == NULL || msgq->priv == NULL || buf == NULL) {
         return ERR_FAULT;
     }
 
-    priv = (xss_msgq_priv_t *)msgq->priv;
+    while (clock_gettime(CLOCK_REALTIME, &ts) < 0) {}
+    ts.tv_sec += (timeout_us / 1000000);
+    ts.tv_nsec += (timeout_us % 1000000) * 1000;
+    while (ts.tv_nsec >= 1000000000) {
+        ts.tv_sec++;
+        ts.tv_nsec -= 1000000000;
+    }
+
+    priv = (xss_osal_msgq_priv_t *)msgq->priv;
     pthread_mutex_lock(&priv->r_mutex);
     while (DATA_SIZE(priv) == 0) {
         if (timeout_us == XSS_OSAL_WAIT_POLLING) {
@@ -112,13 +120,6 @@ xss_result_t xss_msgq_recv(xss_msgq_t *msgq, void *buf, uint32_t *nbytes, uint32
                 break;
             }
         } else {
-            while (clock_gettime(CLOCK_REALTIME, &ts) < 0) {}
-            ts.tv_sec += (timeout_us / 1000000);
-            ts.tv_nsec += (timeout_us % 1000000) * 1000;
-            while (ts.tv_nsec >= 1000000000) {
-            	ts.tv_sec++;
-                ts.tv_nsec -= 1000000000;
-            }
             if (pthread_cond_timedwait(&priv->r_cond, &priv->r_mutex, &ts) != 0) {
                 pthread_mutex_unlock(&priv->r_mutex);
                 ret = ERR_TIMEOUT;
@@ -129,11 +130,11 @@ xss_result_t xss_msgq_recv(xss_msgq_t *msgq, void *buf, uint32_t *nbytes, uint32
 
     recv_len = DATA_SIZE(priv);
     if (recv_len > 0) {
-    	if (recv_len > *nbytes) {
-    		recv_len = *nbytes;
-    	} else {
-    		*nbytes = recv_len;
-    	}
+        if (recv_len > *nbytes) {
+            recv_len = *nbytes;
+        } else {
+            *nbytes = recv_len;
+        }
 
         if ((priv->tail + recv_len) > priv->size) {
             memcpy(buf, &priv->buf[priv->tail], priv->size - priv->tail);
@@ -154,17 +155,25 @@ xss_result_t xss_msgq_recv(xss_msgq_t *msgq, void *buf, uint32_t *nbytes, uint32
     return ret;
 }
 
-xss_result_t xss_msgq_send(xss_msgq_t *msgq, void *buf, uint32_t nbytes, uint32_t timeout_us)
+xss_result_t xss_osal_msgq_send(xss_osal_msgq_t *msgq, void *buf, uint32_t nbytes, uint32_t timeout_us)
 {
     struct timespec ts;
     xss_result_t ret = SUCCESS;
-    xss_msgq_priv_t *priv = NULL;
+    xss_osal_msgq_priv_t *priv = NULL;
 
     if (msgq == NULL || msgq->priv == NULL || buf == NULL) {
         return ERR_FAULT;
     }
 
-    priv = (xss_msgq_priv_t *)msgq->priv;
+    while (clock_gettime(CLOCK_REALTIME, &ts) < 0) {}
+    ts.tv_sec += (timeout_us / 1000000);
+    ts.tv_nsec += (timeout_us % 1000000) * 1000;
+    while (ts.tv_nsec >= 1000000000) {
+        ts.tv_sec++;
+        ts.tv_nsec -= 1000000000;
+    }
+
+    priv = (xss_osal_msgq_priv_t *)msgq->priv;
     pthread_mutex_lock(&priv->s_mutex);
     while (FREE_SIZE(priv) < nbytes) {
         if (timeout_us == XSS_OSAL_WAIT_POLLING) {
@@ -178,18 +187,8 @@ xss_result_t xss_msgq_send(xss_msgq_t *msgq, void *buf, uint32_t nbytes, uint32_
                 break;
             }
         } else {
-            while (clock_gettime(CLOCK_REALTIME, &ts) < 0) {
-                break;
-            }
-            ts.tv_sec += (timeout_us / 1000000);
-            ts.tv_nsec += (timeout_us % 1000000) * 1000;
-            while (ts.tv_nsec >= 1000000000) {
-            	ts.tv_sec++;
-                ts.tv_nsec -= 1000000000;
-            }
-
             if (pthread_cond_timedwait(&priv->s_cond, &priv->s_mutex, &ts) != 0) {
-            	pthread_mutex_unlock(&priv->s_mutex);
+                pthread_mutex_unlock(&priv->s_mutex);
                 ret = ERR_TIMEOUT;
                 break;
             }
