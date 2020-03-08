@@ -32,12 +32,21 @@ xss_result_t xss_osal_msgq_create(xss_osal_msgq_t **msgq, xss_osal_msgq_attr_t *
     xss_osal_msgq_t *xmsgq = NULL;
     xss_osal_msgq_priv_t *priv = NULL;
     void *mem_base = NULL;
+    uint32_t size = 1;
 
     if (msgq == NULL || attr == NULL) {
         return ERR_FAULT;
     }
 
-    mem_base = calloc(sizeof(xss_osal_msgq_t) + sizeof(xss_osal_msgq_priv_t) + attr->size, 1);
+    if (!attr->size) {
+        return ERR_INVAL;
+    }
+
+    while (attr->size >= size) {
+        size = (size << 1);
+    }
+
+    mem_base = calloc(sizeof(xss_osal_msgq_t) + sizeof(xss_osal_msgq_priv_t) + size, 1);
     if (mem_base == NULL) {
         return ERR_NOMEM;
     }
@@ -48,9 +57,9 @@ xss_result_t xss_osal_msgq_create(xss_osal_msgq_t **msgq, xss_osal_msgq_attr_t *
 
     priv = (xss_osal_msgq_priv_t *)xmsgq->priv;
     priv->buf = (uint8_t *)(mem_base + sizeof(xss_osal_msgq_t) + sizeof(xss_osal_msgq_priv_t));
-    priv->size = attr->size;
-    priv->head = 240;
-    priv->tail = 240;
+    priv->size = size;
+    priv->head = 0;
+    priv->tail = 0;
 
     pthread_mutex_init(&priv->r_mutex, NULL);
     pthread_mutex_init(&priv->s_mutex, NULL);
@@ -98,12 +107,14 @@ xss_result_t xss_osal_msgq_recv(xss_osal_msgq_t *msgq, void *buf, uint32_t *nbyt
         return ERR_FAULT;
     }
 
-    while (clock_gettime(CLOCK_REALTIME, &ts) < 0) {}
-    ts.tv_sec += (timeout_us / 1000000);
-    ts.tv_nsec += (timeout_us % 1000000) * 1000;
-    while (ts.tv_nsec >= 1000000000) {
-        ts.tv_sec++;
-        ts.tv_nsec -= 1000000000;
+    if ((timeout_us != XSS_OSAL_WAIT_POLLING) && (timeout_us != XSS_OSAL_WAIT_FOREVER)) {
+        while (clock_gettime(CLOCK_REALTIME, &ts) < 0) {}
+        ts.tv_sec += (timeout_us / 1000000);
+        ts.tv_nsec += (timeout_us % 1000000) * 1000;
+        while (ts.tv_nsec >= 1000000000) {
+            ts.tv_sec++;
+            ts.tv_nsec -= 1000000000;
+        }
     }
 
     priv = (xss_osal_msgq_priv_t *)msgq->priv;

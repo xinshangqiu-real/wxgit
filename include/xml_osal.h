@@ -1,38 +1,38 @@
-#ifndef __XML_MSGQ_H_
-#define __XML_MSGQ_H_
+#ifndef __XML_OSAL_H_
+#define __XML_OSAL_H_
 
 #include "xml_define.h"
 
 /*
  * wait timeout macro
  * */
-#define XSS_OSAL_WAIT_POLLING            (uint32_t)(0)
-#define XSS_OSAL_WAIT_FOREVER            (uint32_t)(-1)
+#define XSS_OSAL_WAIT_POLLING               (uint32_t)(0)
+#define XSS_OSAL_WAIT_FOREVER               (uint32_t)(-1)
 
 /*
  * timer repeat timer macro
  * */
-#define XSS_OSAL_REPEAT_FOREVER            (uint32_t)(0)
+#define XSS_OSAL_REPEAT_FOREVER             (uint32_t)(0)
 
 /*
  * task or timer priority in thread schedule
  * */
-#define XSS_OSAL_PRIO_DEFAULT            0
-#define XSS_OSAL_PRIO_NORMAL            5
-#define XSS_OSAL_PRIO_LOW                10
-#define XSS_OSAL_PRIO_MID               15
-#define XSS_OSAL_PRIO_HIGH              20
-#define XSS_OSAL_PRIO_TIML              25
-#define XSS_OSAL_PRIO_TIMM                30
-#define XSS_OSAL_PRIO_TIMH                35
-#define XSS_OSAL_PRIO_INT                50
-#define XSS_OSAL_PRIO_HIGHEST              99
+#define XSS_OSAL_PRIO_DEFAULT               0
+#define XSS_OSAL_PRIO_NORMAL                5
+#define XSS_OSAL_PRIO_LOW                   10
+#define XSS_OSAL_PRIO_MID                   15
+#define XSS_OSAL_PRIO_HIGH                  20
+#define XSS_OSAL_PRIO_TIML                  25
+#define XSS_OSAL_PRIO_TIMM                  30
+#define XSS_OSAL_PRIO_TIMH                  35
+#define XSS_OSAL_PRIO_INT                   50
+#define XSS_OSAL_PRIO_HIGHEST               99
 
 /*
  * stack size for task or timer
  * Set stacksize to 0, linux system will use deault stack size
  * */
-#define XSS_OSAL_STACKSIZE_DEFAULT      0
+#define XSS_OSAL_STACKSIZE_DEFAULT          0
 
 
 /*
