@@ -18,12 +18,6 @@ typedef struct xss_hal_cam_cfg {
     uint32_t buf_num;
 } xss_hal_cam_cfg_t;
 
-typedef struct xss_stream_buf {
-    uint32_t totl_len;
-    uint32_t data_len;
-    void *data;
-} xss_stream_buf_t;
-
 #define XSS_CAM_FMT_MJPEG       0x01
 #define XSS_CAM_FMT_YUYV        0x02
 

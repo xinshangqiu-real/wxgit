@@ -8,6 +8,8 @@
 #include <stdbool.h>
 #include <errno.h>
 #include <unistd.h>
+
+
 /*
  * return value
  * */
@@ -41,6 +43,18 @@ typedef int32_t xss_result_t;
 #define XSS_MODULE_CAM                  0x12        /* camera hal module */
 #define XSS_MODULE_US                   0x13        /* up stream module*/
 #define XSS_MODULE_DS                   0x14        /* down stream module */
+#define XSS_MODULE_MB                   0x15        /* message bus */
 #define XSS_MODULE_UNKNOW               0xFF        /* unknow module */
+
+
+
+/*
+ * misc
+ * */
+typedef struct xss_stream_buf {
+    uint32_t totl_len;
+    uint32_t data_len;
+    uint8_t *data;
+} xss_stream_buf_t;
 
 #endif

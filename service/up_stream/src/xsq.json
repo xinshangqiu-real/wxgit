@@ -1,0 +1,13 @@
+{
+    "xsq_us": {
+	    "log":{
+		    "level": "warnning",
+            "directory": "/tmp/blackbox"
+	    },
+	    "msg_net":{
+            "/dev/ttyUSB0" : {"status": 1, "type": "uart", "port": "/dev/ttyUSB0", "rate": 921600,  "protocol": "v1"},
+            "local xsq_us" : {"status": 1, "type": "local","port": "/dev/xsq_us",  "rate": 921600,  "protocol": "local"},
+            "ip test     " : {"status": 1, "type": "ip",   "port": "192.168.1.8",  "rate": 921600,  "protocol": "v1"}
+	    }
+    }
+}

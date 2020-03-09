@@ -4,11 +4,13 @@
  *  Created on: Mar 1, 2020
  *      Author: xinshangqiu
  */
-
-#include <us_common.h>
-#include <us_state.h>
 #include "xml_define.h"
 #include "xml_log.h"
+
+
+#include "us_common.h"
+#include "us_state.h"
+
 
 
 
@@ -24,6 +26,11 @@ int main(int argc, char **argv)
         .buf_num = 4
     };
 
+    ret = xss_log_init();
+    if (ret != SUCCESS) {
+        US_LOGE("xss_log_init failed:%d\n", ret);
+    }
+
     us_info = calloc(1, sizeof(us_info_t));
     if (us_info == NULL) {
         US_LOGF("no mem\n");
@@ -36,21 +43,23 @@ int main(int argc, char **argv)
     us_info->cam_cfg.frame_rate = cam_cfg.frame_rate;
     us_info->cam_cfg.buf_num = cam_cfg.buf_num;
 
-    ret = us_cam_init(us_info);
-    if (ret != SUCCESS) {
-        US_LOGE("us_cam_init failed:%d\n", ret);
-        goto exit;
-    }
+//    ret = us_cam_init(us_info);
+//    if (ret != SUCCESS) {
+//        US_LOGE("us_cam_init failed:%d\n", ret);
+//        goto exit;
+//    }
+
 
     while (1) {
         US_LOGI("up stream service heartbeat\n");
-        xss_osal_sleep(2000000);
+//        xss_osal_sleep(500000);
+        sleep(1);
     }
 
-    exit:
-    ret = us_cam_exit(us_info);
-    if (ret != SUCCESS) {
-        US_LOGE("us_cam_exit failed:%d\n", ret);
-    }
+//    exit:
+//    ret = us_cam_exit(us_info);
+//    if (ret != SUCCESS) {
+//        US_LOGE("us_cam_exit failed:%d\n", ret);
+//    }
 
 }
